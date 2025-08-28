@@ -1,3 +1,27 @@
+console.log("script.js loaded");
+
+let currentLevel = 1;
+let levelsData = [];
+
+async function loadLevels() {
+  try {
+    const response = await fetch("levels.json");
+    console.log("Fetched levels.json, status:", response.status);
+    const data = await response.json();
+    console.log("Levels data:", data);
+
+    levelsData = data.levels;
+    loadLevel(currentLevel);
+  } catch (err) {
+    console.error("Error loading levels.json:", err);
+  }
+}
+
+function loadLevel(levelId) {
+  console.log("Loading level", levelId);
+  // ...rest of your code...
+}
+loadLevels();
 function loadLevel(levelId) {
   const puzzleDiv = document.getElementById("puzzle");
   const numbersDiv = document.getElementById("numbers");
