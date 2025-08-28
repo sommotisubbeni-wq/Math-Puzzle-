@@ -1,13 +1,3 @@
-let currentLevel = 1;
-let levelsData = [];
-
-async function loadLevels() {
-  const response = await fetch("levels.json");
-  const data = await response.json();
-  levelsData = data.levels;
-  loadLevel(currentLevel);
-}
-
 function loadLevel(levelId) {
   const puzzleDiv = document.getElementById("puzzle");
   const numbersDiv = document.getElementById("numbers");
@@ -41,23 +31,34 @@ function loadLevel(levelId) {
     const div = document.createElement("div");
     div.className = "number";
     div.textContent = num;
-    div.draggable = true;
     numbersDiv.appendChild(div);
 
-    div.addEventListener("dragstart", e => {
-      e.dataTransfer.setData("text", e.target.textContent);
+    // ✅ Click/tap to place number
+    div.addEventListener("click", () => {
+      const emptySlot = document.querySelector(".slot:not(:has(span)):empty");
+      if (emptySlot && !div.used) {
+        emptySlot.textContent = num;
+        emptySlot.dataset.filled = num;
+        div.style.visibility = "hidden";
+        div.used = true;
+        checkWin();
+      }
     });
   });
 
   const slots = document.querySelectorAll(".slot");
   slots.forEach(slot => {
-    slot.addEventListener("dragover", e => e.preventDefault());
-    slot.addEventListener("drop", e => {
-      e.preventDefault();
-      if (!slot.textContent) {
-        const num = e.dataTransfer.getData("text");
-        slot.textContent = num;
-        checkWin();
+    // ✅ Tap a slot to clear it
+    slot.addEventListener("click", () => {
+      if (slot.textContent) {
+        const num = slot.dataset.filled;
+        slot.textContent = "";
+        slot.dataset.filled = "";
+        const tile = [...document.querySelectorAll(".number")].find(n => n.textContent === num && n.used);
+        if (tile) {
+          tile.style.visibility = "visible";
+          tile.used = false;
+        }
       }
     });
   });
@@ -78,6 +79,4 @@ function loadLevel(levelId) {
     currentLevel++;
     loadLevel(currentLevel);
   };
-}
-
-loadLevels();
+                          }
