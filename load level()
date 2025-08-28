@@ -1,0 +1,40 @@
+function loadLevel(levelId) {
+  const level = levelsData.find(l => l.id === levelId);
+  const puzzleDiv = document.getElementById("puzzle");
+  const numbersDiv = document.getElementById("numbers");
+  const title = document.getElementById("levelTitle");
+
+  puzzleDiv.innerHTML = "";
+  numbersDiv.innerHTML = "";
+  title.textContent = `Level ${level.id} (${level.difficulty})`;
+
+  // Build puzzle
+  level.equations.forEach(eq => {
+    const row = document.createElement("div");
+    row.classList.add("equation");
+    eq.forEach(symbol => {
+      if (symbol === "□") {
+        const blank = document.createElement("div");
+        blank.classList.add("blank");
+        blank.setAttribute("ondrop", "drop(event)");
+        blank.setAttribute("ondragover", "allowDrop(event)");
+        row.appendChild(blank);
+      } else {
+        const span = document.createElement("span");
+        span.textContent = symbol;
+        row.appendChild(span);
+      }
+    });
+    puzzleDiv.appendChild(row);
+  });
+
+  // Build numbers
+  level.numbers.forEach(num => {
+    const tile = document.createElement("div");
+    tile.classList.add("number");
+    tile.textContent = num;
+    tile.setAttribute("draggable", "true");
+    tile.setAttribute("ondragstart", "drag(event)");
+    numbersDiv.appendChild(tile);
+  });
+}
