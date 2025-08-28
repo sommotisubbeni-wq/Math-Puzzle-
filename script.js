@@ -1,28 +1,20 @@
-console.log("script.js loaded");
-
-let currentLevel = 1;
 let levelsData = [];
+let currentLevel = 1;
 
-async function loadLevels() {
-  try {
-    const response = await fetch("levels.json");
-    console.log("Fetched levels.json, status:", response.status);
-    const data = await response.json();
-    console.log("Levels data:", data);
-
+fetch("levels.json")
+  .then(res => res.json())
+  .then(data => {
     levelsData = data.levels;
     loadLevel(currentLevel);
-  } catch (err) {
-    console.error("Error loading levels.json:", err);
-  }
-}
+  });
 
 function loadLevel(levelId) {
-  console.log("Loading level", levelId);
-  // ...rest of your code...
-}
-loadLevels();
-function loadLevel(levelId) {
+  const level = levelsData.find(l => l.id === levelId);
+  if (!level) {
+    document.getElementById("puzzle").innerHTML = "🎉 All levels complete!";
+    return;
+  }
+
   const puzzleDiv = document.getElementById("puzzle");
   const numbersDiv = document.getElementById("numbers");
   const title = document.getElementById("levelTitle");
@@ -31,76 +23,75 @@ function loadLevel(levelId) {
 
   puzzleDiv.innerHTML = "";
   numbersDiv.innerHTML = "";
-  message.textContent = "";
+  message.innerHTML = "";
   nextBtn.style.display = "none";
-
-  const level = levelsData.find(l => l.id === levelId);
-  if (!level) {
-    title.textContent = "🎉 Game Completed!";
-    return;
-  }
 
   title.textContent = `Level ${level.id} (${level.difficulty})`;
 
-  // Build equations
+  // Build puzzle
   level.equations.forEach(eq => {
     const row = document.createElement("div");
-    row.className = "row";
-    row.innerHTML = eq.text.replace("{slot}", `<span class="slot" data-answer="${eq.answer}"></span>`);
+    row.classList.add("equation");
+
+    eq.forEach(symbol => {
+      if (symbol === "□") {
+        const blank = document.createElement("div");
+        blank.classList.add("blank");
+        blank.dataset.answer = eq.answer.shift(); // take first expected answer
+        blank.addEventListener("dragover", e => e.preventDefault());
+        blank.addEventListener("drop", drop);
+        row.appendChild(blank);
+      } else {
+        const span = document.createElement("span");
+        span.textContent = symbol;
+        row.appendChild(span);
+      }
+    });
     puzzleDiv.appendChild(row);
   });
 
-  // Build number tiles
+  // Numbers to drag
   level.numbers.forEach(num => {
-    const div = document.createElement("div");
-    div.className = "number";
-    div.textContent = num;
-    numbersDiv.appendChild(div);
-
-    // ✅ Click/tap to place number
-    div.addEventListener("click", () => {
-      const emptySlot = document.querySelector(".slot:not(:has(span)):empty");
-      if (emptySlot && !div.used) {
-        emptySlot.textContent = num;
-        emptySlot.dataset.filled = num;
-        div.style.visibility = "hidden";
-        div.used = true;
-        checkWin();
-      }
-    });
+    const tile = document.createElement("div");
+    tile.classList.add("number");
+    tile.textContent = num;
+    tile.draggable = true;
+    tile.addEventListener("dragstart", drag);
+    numbersDiv.appendChild(tile);
   });
+}
 
-  const slots = document.querySelectorAll(".slot");
-  slots.forEach(slot => {
-    // ✅ Tap a slot to clear it
-    slot.addEventListener("click", () => {
-      if (slot.textContent) {
-        const num = slot.dataset.filled;
-        slot.textContent = "";
-        slot.dataset.filled = "";
-        const tile = [...document.querySelectorAll(".number")].find(n => n.textContent === num && n.used);
-        if (tile) {
-          tile.style.visibility = "visible";
-          tile.used = false;
-        }
-      }
-    });
-  });
+function drag(e) {
+  e.dataTransfer.setData("text", e.target.textContent);
+}
 
-  function checkWin() {
-    let correct = true;
-    slots.forEach(slot => {
-      if (slot.textContent !== slot.dataset.answer) correct = false;
-    });
-    if (correct) {
-      message.textContent = "✅ Correct! You Win!";
-      message.style.color = "green";
-      nextBtn.style.display = "inline-block";
-    }
+function drop(e) {
+  e.preventDefault();
+  if (!e.target.textContent) {
+    const num = e.dataTransfer.getData("text");
+    e.target.textContent = num;
+
+    checkWin();
   }
+}
 
-  nextBtn.onclick = () => {
-    currentLevel++;
-    loadLevel(currentLevel);
-  };
-                          }
+function checkWin() {
+  const blanks = document.querySelectorAll(".blank");
+  let correct = true;
+
+  blanks.forEach(blank => {
+    if (blank.textContent != blank.dataset.answer) {
+      correct = false;
+    }
+  });
+
+  if (correct) {
+    document.getElementById("message").textContent = "✅ You Win!";
+    document.getElementById("nextBtn").style.display = "inline-block";
+  }
+}
+
+function nextLevel() {
+  currentLevel++;
+  loadLevel(currentLevel);
+}
