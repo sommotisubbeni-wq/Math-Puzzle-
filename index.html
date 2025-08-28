@@ -3,18 +3,123 @@
 <head>
   <meta charset="UTF-8">
   <title>Math Puzzle Game</title>
-  <link rel="stylesheet" href="style.css">
+  <style>
+    body {
+      font-family: Arial, sans-serif;
+      text-align: center;
+      background: #f0f0f0;
+    }
+    h1 {
+      margin: 20px 0;
+    }
+    .puzzle {
+      display: inline-block;
+      margin: 20px;
+      padding: 20px;
+      background: #fff;
+      border-radius: 12px;
+      box-shadow: 0 0 10px rgba(0,0,0,0.2);
+    }
+    .row {
+      margin: 10px 0;
+      font-size: 28px;
+    }
+    .slot {
+      display: inline-block;
+      width: 50px;
+      height: 50px;
+      margin: 5px;
+      line-height: 50px;
+      border: 2px dashed #666;
+      border-radius: 8px;
+      vertical-align: middle;
+      background: #fafafa;
+      font-weight: bold;
+      font-size: 24px;
+    }
+    .number {
+      display: inline-block;
+      width: 50px;
+      height: 50px;
+      margin: 5px;
+      line-height: 50px;
+      border-radius: 8px;
+      background: #4CAF50;
+      color: white;
+      font-weight: bold;
+      cursor: grab;
+      font-size: 24px;
+    }
+    .number:active {
+      cursor: grabbing;
+    }
+    #numbers {
+      margin-top: 20px;
+    }
+    #message {
+      margin-top: 15px;
+      font-size: 22px;
+      font-weight: bold;
+    }
+  </style>
 </head>
 <body>
   <h1>Math Puzzle Game</h1>
-  <h2 id="levelTitle">Level 1 (Easy)</h2>
 
-  <div id="puzzle"></div>
-  <div id="numbers"></div>
+  <div class="puzzle" id="puzzle">
+    <div class="row">7 + <span class="slot" data-answer="2"></span> = 9</div>
+    <div class="row">6 - 2 = <span class="slot" data-answer="4"></span></div>
+    <div class="row">2 + <span class="slot" data-answer="6"></span> = 8</div>
+    <div class="row">7 + <span class="slot" data-answer="2"></span> = 9</div>
+  </div>
+
+  <div id="numbers">
+    <div class="number" draggable="true">2</div>
+    <div class="number" draggable="true">4</div>
+    <div class="number" draggable="true">6</div>
+    <div class="number" draggable="true">8</div>
+  </div>
 
   <div id="message"></div>
-  <button id="nextBtn" onclick="nextLevel()" style="display:none;">Next Level</button>
 
-  <script src="script.js"></script>
+  <script>
+    const numbers = document.querySelectorAll(".number");
+    const slots = document.querySelectorAll(".slot");
+    const message = document.getElementById("message");
+
+    numbers.forEach(num => {
+      num.addEventListener("dragstart", e => {
+        e.dataTransfer.setData("text", e.target.textContent);
+      });
+    });
+
+    slots.forEach(slot => {
+      slot.addEventListener("dragover", e => {
+        e.preventDefault();
+      });
+
+      slot.addEventListener("drop", e => {
+        e.preventDefault();
+        const data = e.dataTransfer.getData("text");
+        if (!slot.textContent) {
+          slot.textContent = data;
+          checkWin();
+        }
+      });
+    });
+
+    function checkWin() {
+      let correct = true;
+      slots.forEach(slot => {
+        if (slot.textContent !== slot.dataset.answer) {
+          correct = false;
+        }
+      });
+      if (correct) {
+        message.textContent = "🎉 You Win!";
+        message.style.color = "green";
+      }
+    }
+  </script>
 </body>
 </html>
